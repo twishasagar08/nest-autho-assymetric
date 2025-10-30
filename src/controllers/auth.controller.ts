@@ -1,6 +1,6 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { UsersService } from '../users/users.service';
+import { AuthService } from '../services/auth.service';
+import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 
 @Controller('auth') // ✅ base path
@@ -12,8 +12,7 @@ export class AuthController {
 
   @Post('login') // ✅ POST /auth/login
   async login(@Body() dto: CreateUserDto) {
-    const user = await this.authService.validateUser(dto.email, dto.password);
-    return this.authService.login(user);
+    return this.authService.login({ email: dto.email, password: dto.password });
   }
 
   @Post('register') // ✅ POST /auth/register
@@ -23,7 +22,7 @@ export class AuthController {
       return { message: 'Email already exists' };
     }
 
-    const newUser = await this.usersService.createUser(dto.email, dto.password);
-    return { message: 'User registered successfully', email: newUser.email };
+    // Delegate creation and token creation to AuthService
+    return this.authService.register({ email: dto.email, password: dto.password });
   }
 }
