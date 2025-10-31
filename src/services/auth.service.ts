@@ -3,6 +3,7 @@ import { UsersService } from '../services/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { JwtConfigService } from '../config/jwt.config.service';
+import { KafkaProducerService } from '../services/kafka.producer.service';
 
 @Injectable()
 export class AuthService {
@@ -10,6 +11,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private jwtConfigService: JwtConfigService,
+    private kafkaProducerService: KafkaProducerService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -27,10 +29,29 @@ export class AuthService {
    * Login using credentials (email + password).
    * Returns an object with the signed access_token.
    */
-  async login(credentials: { email: string; password: string }): Promise<{ message: string }> {
+  async login(credentials: { email: string; password: string }): Promise<{ message: string; access_token: string }> {
     const user = await this.validateUser(credentials.email, credentials.password);
     const payload = { email: user.email, sub: user.id };
-    return { message: 'Login successful'};
+    const token = this.jwtService.sign(payload);
+    
+    // Publish login event to Kafka
+    await this.kafkaProducerService.publish('login', {
+      event: 'user_login',
+      user: { 
+        email: user.email, 
+        id: user.id 
+      },
+      metadata: {
+        timestamp: new Date().toISOString(),
+        token: token,
+        clientId: process.env.KAFKA_CLIENT_ID || 'nest-auth-app'
+      }
+    });
+    
+    return { 
+      access_token: token,
+      message: 'Login successful'
+    };
   }
 
   /**

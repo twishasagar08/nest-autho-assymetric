@@ -12,7 +12,8 @@ export class AuthController {
 
   @Post('login') // ✅ POST /auth/login
   async login(@Body() dto: CreateUserDto) {
-    return this.authService.login({ email: dto.email, password: dto.password });
+    const response = await this.authService.login({ email: dto.email, password: dto.password });
+    return { access_token: response.access_token, message: response.message };
   }
 
   @Post('register') // ✅ POST /auth/register

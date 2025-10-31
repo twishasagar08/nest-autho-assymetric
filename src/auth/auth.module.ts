@@ -7,7 +7,7 @@ import { AuthController } from '../controllers/auth.controller';
 import { UsersModule } from '../modules/users.module';
 import { JwtConfigModule } from '../config/jwt.config.module';//holds the RSA keys and configuration for JWT signing and verifying
 import { JwtConfigService } from '../config/jwt.config.service';//seperates key setup from the auth logic
-import { KafkaModule } from './kafka.module';
+import { KafkaModule } from '../modules/kafka.module';
 
 @Module({
   imports: [
@@ -15,7 +15,6 @@ import { KafkaModule } from './kafka.module';
     PassportModule,
     ConfigModule.forRoot(),// loads environment variables automatically from a .env file
     JwtConfigModule,//RSA keys are stored and managed
-    KafkaModule,
     JwtModule.registerAsync({//registers the JWT module asyncronously
       imports: [JwtConfigModule],
       inject: [JwtConfigService],// this service provides the actual RSA keys
